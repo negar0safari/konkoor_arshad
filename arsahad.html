@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سامانه هوشمند برنامه‌ریزی و روزشمار کنکور ارشد عمران</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary: #0f172a;
+    --accent: #10b981;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --danger-border: #fca5a5;
+    --warning: #f59e0b;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding: 20px; line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  
+  /* بنر روزشمار هوشمند کنکور */
+  .countdown-banner {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+  }
+  .countdown-title { font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .countdown-timer { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 700; background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); }
+  .countdown-timer span { color: #fef08a; font-size: 1.25rem; font-weight: 800; }
+
+  header { text-align: center; margin-bottom: 25px; padding: 20px; background: var(--card); border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  header h1 { font-size: 1.45rem; color: var(--secondary); margin-bottom: 6px; }
+  header p { font-size: 0.88rem; color: var(--muted); }
+
+  /* ماه‌ها */
+  .month-nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 25px; }
+  .btn-month { background: var(--card); border: 1px solid var(--border); padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; color: var(--text); transition: all 0.2s; }
+  .btn-month:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-month.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(37,99,235,0.25); }
+
+  /* بخش اختصاصی مباحث عقب‌مانده */
+  .backlog-panel { background: var(--danger-bg); border: 2px dashed var(--danger-border); border-radius: 14px; padding: 18px; margin-bottom: 25px; }
+  .backlog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .backlog-header h3 { color: #991b1b; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+  .backlog-count { background: var(--danger); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
+  .backlog-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+  .backlog-item { background: white; border: 1px solid var(--danger-border); padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; }
+  .backlog-topic { font-weight: 700; color: #7f1d1d; }
+  .backlog-meta { font-size: 0.78rem; color: var(--muted); display: block; }
+  .btn-resolved { background: var(--accent); color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .no-backlog { color: #166534; font-size: 0.9rem; background: #dcfce7; padding: 10px; border-radius: 8px; text-align: center; }
+
+  /* داشبورد و ثبت گزارش */
+  .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+  @media(max-width: 850px) { .dashboard { grid-template-columns: 1fr; } .countdown-banner { flex-direction: column; gap: 10px; text-align: center; } }
+  .card { background: var(--card); padding: 20px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .card h2 { font-size: 1.15rem; color: var(--secondary); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+  
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  
+  .status-checklist { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+  .status-checklist p { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; color: var(--secondary); }
+  .status-check-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.84rem; }
+  .status-check-item select { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.8rem; }
+  .btn-submit { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; }
+
+  canvas { width: 100% !important; height: 180px !important; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; text-align: center; }
+  .stat-box { background: var(--bg); padding: 10px; border-radius: 8px; }
+  .stat-val { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+  .stat-lbl { font-size: 0.75rem; color: var(--muted); }
+
+  /* کارت روز انتخابی */
+  .day-focus-card { display: none; background: #eff6ff; border: 1.5px solid #93c5fd; padding: 18px; border-radius: 12px; margin-bottom: 25px; }
+  .day-focus-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .day-focus-header h3 { color: #1e40af; font-size: 1.1rem; }
+  .btn-clear { background: var(--danger); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+  .day-blocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 0.88rem; }
+  @media(max-width: 650px) { .day-blocks { grid-template-columns: 1fr; } }
+  .block-item { background: white; padding: 10px; border-radius: 8px; border: 1px solid #bfdbfe; }
+  .block-item span { display: block; font-weight: 700; color: var(--secondary); margin-bottom: 3px; }
+
+  /* اهداف ماه و جداول */
+  .month-goals { background: #fdf2f8; border: 1px solid #fbcfe8; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.9rem; }
+  .month-goals h4 { color: #9d174d; margin-bottom: 8px; }
+  .month-goals ul { padding-right: 20px; color: #831843; }
+
+  .week-section { margin-bottom: 25px; }
+  .week-title { font-size: 1.05rem; font-weight: 700; color: var(--secondary); margin-bottom: 8px; padding-right: 6px; border-right: 4px solid var(--primary); }
+  .schedule-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); font-size: 0.86rem; margin-bottom: 15px; }
+  .schedule-table th { background: #f1f5f9; color: var(--secondary); padding: 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  .schedule-table td { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .schedule-table tr:hover td { background: #f8fafc; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 0.75rem; font-weight: 600; margin-left: 5px; }
+  .b-main { background: #dbeafe; color: #1e40af; }
+  .b-sub { background: #fef3c7; color: #92400e; }
+  .b-lang { background: #dcfce7; color: #166534; }
+  .badge-thursday { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- روزشمار کنکور ارشد -->
+  <div class="countdown-banner">
+    <div class="countdown-title">
+      🎯 آزمون کارشناسی ارشد مهندسی عمران (۱۶ و ۱۷ اردیبهشت)
+    </div>
+    <div class="countdown-timer">
+      فرصت تا کنکور: <span id="daysLeftNum">--</span> روز مانده
+    </div>
+  </div>
+
+  <header>
+    <h1>دفتر برنامه‌ریزی هوشمند کنکور ارشد عمران</h1>
+    <p>برنامه استراتژیک داوطلب شاغل: ۲ الی ۳ ساعت در روز (۹۰ + ۴۵ + ۲۰ دقیقه) | هدف: امیرکبیر و علم‌وصنعت</p>
+  </header>
+
+  <!-- دکمه‌های ناوبری ۷ ماه -->
+  <div class="month-nav" id="monthNav">
+    <button class="btn-month active" onclick="switchMonth(1)">ماه ۱: مهر</button>
+    <button class="btn-month" onclick="switchMonth(2)">ماه ۲: آبان</button>
+    <button class="btn-month" onclick="switchMonth(3)">ماه ۳: آذر</button>
+    <button class="btn-month" onclick="switchMonth(4)">ماه ۴: دی</button>
+    <button class="btn-month" onclick="switchMonth(5)">ماه ۵: بهمن</button>
+    <button class="btn-month" onclick="switchMonth(6)">ماه ۶: اسفند</button>
+    <button class="btn-month" onclick="switchMonth(7)">ماه ۷: فروردین و اردیبهشت</button>
+  </div>
+
+  <!-- بخش اختصاصی مباحث عقب‌مانده (ایستگاه جبرانی پنج‌شنبه) -->
+  <div class="backlog-panel" id="backlogPanel">
+    <div class="backlog-header">
+      <h3>
+        <span>⚠️ مباحث عقب‌مانده (انتقال‌یافته به ایستگاه جبرانی پنج‌شنبه)</span>
+        <span class="backlog-count" id="backlogCount">۰ مبحث</span>
+      </h3>
+      <span style="font-size:0.8rem; color:#991b1b;">این مباحث پنج‌شنبه‌ها مرور و جبران می‌شوند</span>
+    </div>
+    <div class="backlog-list" id="backlogList">
+      <div class="no-backlog">هیچ مبحث عقب‌مانده‌ای ندارید! همه کارها طبق برنامه جلو رفته است. 🎉</div>
+    </div>
+  </div>
+
+  <!-- کارت نمایش با جزئیات کامل روز انتخاب‌شده بالای جداول -->
+  <div id="dayFocusCard" class="day-focus-card">
+    <div class="day-focus-header">
+      <h3 id="focusDayTitle">جزئیات برنامه روز</h3>
+      <button class="btn-clear" onclick="clearFocusCard()">بستن و حذف انتخاب ✕</button>
+    </div>
+    <div class="day-blocks">
+      <div class="block-item">
+        <span>بلوک اصلی (۹۰ دقیقه)</span>
+        <div id="focusBlockMain">-</div>
+      </div>
+      <div class="block-item">
+        <span>بلوک مکمل (۴۵ دقیقه)</span>
+        <div id="focusBlockSub">-</div>
+      </div>
+      <div class="block-item">
+        <span>بلوک ثابت (۲۰ دقیقه)</span>
+        <div id="focusBlockLang">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- داشبورد و ثبت گزارش روزانه -->
+  <div class="dashboard">
+    <div class="card">
+      <h2>ثبت هوشمند گزارش مطالعه شبانه</h2>
+      <form id="studyForm" onsubmit="saveReport(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>تاریخ گزارش</label>
+            <input type="text" id="repDate" class="form-control" placeholder="مثال: ۱۴ مهر" required>
+          </div>
+          <div class="form-group">
+            <label>ساعت مطالعه کل (اگر نخواندید ۰ بزنید)</label>
+            <input type="number" step="0.25" min="0" max="10" id="repHours" class="form-control" placeholder="مثال: 2.5 یا 0" required>
+          </div>
+        </div>
+
+        <div class="status-checklist">
+          <p>وضعیت اجرای هر بلوک درسی امروز:</p>
+          <div class="status-check-item">
+            <span>بلوک اصلی (۹۰ دقیقه):</span>
+            <select id="statusMain">
+              <option value="done">✅ کامل خوانده شد</option>
+              <option value="missed">❌ عقب ماند (انتقال به پنج‌شنبه)</option>
+            </select>
+          </div>
+          <input type="text" id="topicMain" class="form-control" style="margin-bottom:8px; font-size:0.8rem;" placeholder="عنوان مبحث بلوک اصلی (مثلاً: پی سطحی ترزاقی)">
+
+          <div class="status-check-item">
+            <span>بلوک مکمل (۴۵ دقیقه):</span>
+            <select id="statusSub">
+              <option value="done">✅ کامل خوانده شد</option>
+              <option value="missed">❌ عقب ماند (انتقال به پنج‌شنبه)</option>
+            </select>
+          </div>
+          <input type="text" id="topicSub" class="form-control" style="margin-bottom:8px; font-size:0.8rem;" placeholder="عنوان مبحث بلوک مکمل (مثلاً: مهار میلگرد کششی بتن)">
+
+          <div class="status-check-item">
+            <span>روتین زبان (۲۰ دقیقه):</span>
+            <select id="statusLang">
+              <option value="done">✅ اجرا شد</option>
+              <option value="missed">❌ انجام نشد</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>تعداد تست و یادداشت دام طراح / علت عدم مطالعه</label>
+          <input type="text" id="repNotes" class="form-control" placeholder="مثال: ۲۵ تست زده شد / شیفت کاری فشرده بود">
+        </div>
+        <button type="submit" class="btn-submit">ثبت گزارش و آپدیت هوشمند برنامه</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>
+        آنالیز و نمودار روند مطالعه
+        <button onclick="clearAllData()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">پاکسازی دیتابیس</button>
+      </h2>
+      <canvas id="progressChart"></canvas>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-val" id="statTotalHours">۰</div>
+          <div class="stat-lbl">کل ساعات مطالعه</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statDaysCount">۰</div>
+          <div class="stat-lbl">روزهای ثبت‌شده</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statAvgHours">۰</div>
+          <div class="stat-lbl">میانگین روزانه (ساعت)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- اهداف و جداول ماه جاری -->
+  <div id="monthContent">
+    <div id="monthGoals" class="month-goals"></div>
+    <div id="weeksTablesContainer"></div>
+  </div>
+</div>
+
+<script>
+// محاسبه روزشمار هوشمند تا ۱۶ اردیبهشت (معادل حدود ۶ مه)
+function updateCountdown() {
+  const now = new Date();
+  let targetYear = now.getFullYear();
+  // ۱۶ اردیبهشت تقریباً معادل ۶ مه است
+  let examDate = new Date(targetYear, 4, 6); 
+  
+  // اگر از تاریخ امسال گذشته بود، سال بعد هدف قرار گیرد
+  if (now > examDate) {
+    examDate = new Date(targetYear + 1, 4, 6);
+  }
+
+  const diffTime = examDate - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  document.getElementById('daysLeftNum').innerText = diffDays > 0 ? diffDays : 0;
+}
+
+// دیتابیس جامع ۷ ماهه منطبق بر فایل تفصیلی ارسالی
+const curriculum = {
+  1: {
+    name: "مهر ماه",
+    goals: [
+      "بتن ۱: مهار و وصله آرماتور، قلاب‌ها، پیچش و ترکیب برش و پیچش",
+      "تحلیل سازه ۱: قضایای لنگر سطح، تیر مزدوج، کار مجازی، خطوط تأثیر تیر و خرپا",
+      "پی‌سازی: تئوری ترزاقی، گسیختگی‌ها، تراز آب زیرزمینی، شالوده تحت بار برون‌محور",
+      "زبان: لغات تخصصی عمران + عمومی زیر ذره‌بین + ساختارهای شرطی و مجهول"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول مهر: ظرفیت باربری ترزاقی و مباحث مهاری بتن ۱",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: تئوری ترزاقی در شالوده نواری و ضرایب Nc, Nq", sub: "بتن ۱: طول گیرایی و مهار میلگردهای کششی", lang: "زبان: ۲۰ دقیقه لغت تخصصی عمران" },
+          { day: "یکشنبه", main: "تحلیل سازه ۱: روش اول و دوم قضایای لنگر سطح (مور)", sub: "پی‌سازی: تست آموزشی شالوده مربعی و دایره‌ای", lang: "زبان: گرامر مجهول و مرور لغات" },
+          { day: "دوشنبه", main: "بتن ۱: وصله میلگردها و قلاب‌های استاندارد", sub: "تحلیل سازه ۱: روش تیر مزدوج در خیز تیرها", lang: "زبان: لغات عمومی زیر ذره‌بین" },
+          { day: "سه‌شنبه", main: "پی‌سازی: اثر تراز آب بر ظرفیت باربری (ترازهای ۱ و ۲)", sub: "بتن ۱: حل تست‌های سراسری طول مهار و وصله", lang: "زبان: لغات تخصصی سازه و پی" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: کار مجازی در تیرهای معین تحت بار خارجی", sub: "پی‌سازی: خلاصه فرمول‌های ترزاقی و تست تثبیتی", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "مرور خلاصه‌نویس‌های هفته اول مهر", lang: "زبان: درک مطلب متون تخصصی", isThursday: true },
+          { day: "جمعه", main: "آزمون آزمایشی هفتگی: ۳۰ تست پوششی از مباحث هفته", sub: "تحلیل پاسخ‌ها و ثبت در دفترچه دام‌ها", lang: "استراحت و بازیابی" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم مهر: برون‌محوری پی، کار مجازی در قاب‌ها و پیچش",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: شالوده تحت بار برون‌محور تک‌محوره (ابعاد مایرهوف)", sub: "بتن ۱: مفاهیم مقدماتی پیچش و ترک‌خوردگی", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "تحلیل سازه ۱: کار مجازی در قاب‌های معین و خطای ساخت", sub: "پی‌سازی: تست‌های برون‌محوری دو محوره", lang: "زبان: متون تخصصی" },
+          { day: "دوشنبه", main: "بتن ۱: طراحی مقطع بتنی تحت پیچش خالص", sub: "تحلیل سازه ۱: کار مجازی با اثر تغییرات دما", lang: "زبان: واژگان ۵۰۴" },
+          { day: "سه‌شنبه", main: "پی‌سازی: روابط ظرفیت باربری مایرهوف و هنسن", sub: "بتن ۱: حل تست‌های پیچش خالص کنکورهای گذشته", lang: "زبان: لغات عمومی" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: اثر نشست تکیه‌گاهی در کار مجازی", sub: "پی‌سازی: تست‌های تلفیقی ترزاقی و مایرهوف", lang: "زبان: لغات تخصصی" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "ثبت اشتباهات در دفترچه نکات", lang: "زبان: تست درک مطلب", isThursday: true },
+          { day: "جمعه", main: "آزمون مبحثی هفته: ۳۵ تست استاندارد از پی، بتن و تحلیل", sub: "تحلیل کارنامه و استراحت", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم مهر: اندرکنش برش و پیچش و خطوط تأثیر تیرها",
+        days: [
+          { day: "شنبه", main: "بتن ۱: ترکیب برش و پیچش و تنگ‌های مرکب", sub: "پی‌سازی: تست ترکیبی تراز آب و برون‌محوری", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "تحلیل سازه ۱: خطوط تأثیر در تیرهای معین (تعادل)", sub: "بتن ۱: تست‌های اندرکنش برش و پیچش", lang: "زبان: روتین واژگان" },
+          { day: "دوشنبه", main: "پی‌سازی: انواع گسیختگی‌های برشی (عمومی، موضعی، سنبه‌ای)", sub: "تحلیل سازه ۱: روش مولر-برسلاو در خطوط تأثیر", lang: "زبان: لغات عمومی" },
+          { day: "سه‌شنبه", main: "تحلیل سازه ۱: تعیین موقعیت بار بحرانی برای ماکزیمم لنگر", sub: "بتن ۱: مرور فرمول‌های خمش، برش و پیچش", lang: "زبان: لغت تخصصی" },
+          { day: "چهارشنبه", main: "پی‌سازی: تست‌های زمان‌دار ظرفیت باربری", sub: "تحلیل سازه ۱: تست سرعتی خطوط تأثیر تیر", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "فرمول‌نویسی تک‌برگی بتن ۱", lang: "زبان: کلوز تست", isThursday: true },
+          { day: "جمعه", main: "آزمون جامع پوششی بتن ۱ (تست‌های زوج شهریور و مهر)", sub: "تحلیل کامل درصد بتن و رفع اشکال", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم مهر: خطوط تأثیر خرپا و جمع‌بندی نهایی مهرماه",
+        days: [
+          { day: "شنبه", main: "تحلیل سازه ۱: خطوط تأثیر اعضای خرپا (یال‌ها و قطری‌ها)", sub: "پی‌سازی: تست‌های تکمیلی هنسن و وسیک", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "بتن ۱: آزمون جامع اختصاصی ۲۵ تایی بتن ۱", sub: "تحلیل سازه ۱: تعیین حداکثر نیروی خرپا تحت بار", lang: "زبان: ریدینگ تخصصی" },
+          { day: "دوشنبه", main: "پی‌سازی: آزمون جامع اختصاصی ۲۵ تایی پی سطحی", sub: "بتن ۱: تحلیل سوالات آزمون روز قبل", lang: "زبان: لغات ۵۰۴" },
+          { day: "سه‌شنبه", main: "تحلیل سازه ۱: آزمون جامع اختصاصی از جلد اول", sub: "پی‌سازی: تحلیل سوالات آزمون روز قبل", lang: "زبان: روتین واژگان" },
+          { day: "چهارشنبه", main: "تورق و مرور خلاصه‌برگ‌های تحلیل ۱، بتن ۱ و پی", sub: "تحلیل آزمون جلد ۱ تحلیل سازه", lang: "زبان: تست کنکور ۹۰" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: پاکسازی کامل کل لیست قرمز مهر", sub: "بررسی دفترچه دام‌ها و اشتباهات", lang: "زبان: مرور واژگان", isThursday: true },
+          { day: "جمعه", main: "آزمون آزمایشی شبیه‌ساز ماه مهر (۴۵ تست از کل ۳ درس)", sub: "تحلیل رتبه و درصدها و جشن پایان مهر", lang: "استراحت" }
+        ]
+      }
+    ]
+  },
+  2: {
+    name: "آبان ماه",
+    goals: [
+      "پی‌سازی: فشار جانبی در شرایط سکون، تئوری رانکین، خاک چسبنده و ترک کششی، کولمب و دیوارهای حائل",
+      "مکانیک خاک: روابط وزنی-حجمی، دانه‌بندی، حدود اتربرگ، طبقه‌بندی و تراکم خاک",
+      "تحلیل سازه ۱: تثبیت تستی کار مجازی و خطوط تأثیر با تست‌های زمان‌دار",
+      "زبان: لغات تخصصی خاک و پی + درک مطلب متون تخصصی"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول آبان: فشار جانبی رانکین و روابط وزنی-حجمی خاک",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: فشار در شرایط سکون (K0) در ماسه و رس", sub: "مکانیک خاک: فازهای خاک و تعاریف e, n, w, Sr", lang: "زبان: لغات تخصصی خاک" },
+          { day: "یکشنبه", main: "مکانیک خاک: روابط تبدیل تخلخل و درصد اشباع", sub: "پی‌سازی: تئوری رانکین در محرک و مقاوم ماسه", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "پی‌سازی: رسم دیاگرام رانکین با آب و سربار گسترده", sub: "مکانیک خاک: تست‌های وزنی-حجمی", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: وزن مخصوص‌های خشک، تر، اشباع و مستغرق", sub: "پی‌سازی: حل تست‌های تله‌دار رانکین در ماسه", lang: "زبان: روتین لغت" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: تست زمان‌دار کار مجازی معین", sub: "مکانیک خاک: تست تکمیلی روابط وزنی-حجمی", lang: "زبان: لغات ۵۰۴" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "خلاصه‌نویسی فرمول‌های وزنی-حجمی", lang: "زبان: تست درک مطلب", isThursday: true },
+          { day: "جمعه", main: "آزمون مبحثی هفته: ۳۰ تست از خاک و فشار جانبی", sub: "تحلیل کامل اشتباهات محاسباتی", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم آبان: خاک‌های چسبنده، دانه‌بندی و حدود اتربرگ",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: رانکین در رس، عمق ترک کششی Zc و ترانشه 2Zc", sub: "مکانیک خاک: دانه‌بندی و ضرایب Cu و Cc", lang: "زبان: لغات تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: حدود اتربرگ (LL, PL, SL) و شاخص PI", sub: "پی‌سازی: نیروی کل فعال در دیوارهای با ترک کششی", lang: "زبان: روتین واژگان" },
+          { day: "دوشنبه", main: "پی‌سازی: تست‌های ترک کششی و رانکین در رس", sub: "مکانیک خاک: نمودار کازاگرانده و خط A", lang: "زبان: لغات عمومی" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: طبقه‌بندی خاک به روش متحد (USCS)", sub: "پی‌سازی: بررسی دیوارهای چند لایه رسی و ماسه‌ای", lang: "زبان: متون تخصصی" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: تست‌های خطوط تأثیر تیرها و خرپاها", sub: "مکانیک خاک: طبقه‌بندی خاک به روش آشتو", lang: "زبان: لغت ۵۰۴" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "مرور جدول طبقه‌بندی خاک متحد", lang: "زبان: کلوز تست", isThursday: true },
+          { day: "جمعه", main: "آزمون هفتگی: آزمون پوششی ۳۰ تایی خاک، پی و تحلیل ۱", sub: "تحلیل آزمون و ثبت نکات جدید", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم آبان: تئوری کولمب، تراکم خاک و پروکتور",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: تئوری فشار جانبی کولمب و فرضیات گوه", sub: "مکانیک خاک: آزمایش تراکم پروکتور", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: رطوبت بهینه و حداکثر وزن مخصوص خشک", sub: "پی‌سازی: مقایسه تئوری رانکین و کولمب", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "پی‌سازی: کنترل پایداری دیوار حائل (واژگونی و لغزش)", sub: "مکانیک خاک: غلتک‌ها و فاکتورهای تراکم", lang: "زبان: درک مطلب" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: تست‌های تراکم و خط صفر هوا (ZAV)", sub: "پی‌سازی: کنترل فشار کف و خروج از مرکزیت دیوار", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: آزمون جامع پوششی ۲۰ تایی از جلد ۱", sub: "پی‌سازی: تست‌های پایداری دیوار حائل", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "فرمول‌نویسی تک‌برگی فشار جانبی", lang: "زبان: تست کنکور ۹۲", isThursday: true },
+          { day: "جمعه", main: "آزمون آزمایشی ۳۵ تایی از مباحث خوانده‌شده آبان", sub: "تحلیل کارنامه و یادداشت تله‌های طراح", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم آبان: جمع‌بندی فشار جانبی خاک و مرور پوششی مهر",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: آزمون جامع ۲۵ تایی فشار جانبی و دیوار حائل", sub: "مکانیک خاک: مرور تست‌های وزنی-حجمی و دانه‌بندی", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: آزمون جامع ۲۵ تایی بخش اول خاک", sub: "پی‌سازی: تحلیل تست‌های آزمون روز قبل", lang: "زبان: ریدینگ تخصصی" },
+          { day: "دوشنبه", main: "مرور بتن ۱: حل ۱۵ تست زمان‌دار خمش، برش و مهار", sub: "مکانیک خاک: رفع اشکال آزمون بخش اول", lang: "زبان: لغات عمومی" },
+          { day: "سه‌شنبه", main: "مرور پی سطحی: حل ۱۵ تست زمان‌دار ترزاقی و آب", sub: "تحلیل سازه ۱: حل ۱۰ تست سرعتی کار مجازی", lang: "زبان: لغت ۵۰۴" },
+          { day: "چهارشنبه", main: "تورق سریع خلاصه‌نویس‌های خاک و فشار جانبی پی", sub: "حل تست‌های نشان‌دار هفته‌های گذشته", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: پاکسازی کامل کل لیست قرمز آبان", sub: "مرور کامل دفترچه دام‌های آموزشی", lang: "زبان: درک مطلب", isThursday: true },
+          { day: "جمعه", main: "آزمون شبیه‌ساز جامع دوماهه (مهر و آبان): ۵۰ تست استاندارد", sub: "تحلیل کامل کارنامه و بررسی پیشرفت درصدی", lang: "استراحت" }
+        ]
+      }
+    ]
+  },
+  3: {
+    name: "آذر ماه",
+    goals: [
+      "پی‌سازی: شمع‌ها، گروه شمع، اصطکاک منفی، آزمایش‌های SPT و PLT (بستن ۱۰۰٪ پی‌سازی)",
+      "مکانیک خاک: تراوش، قانون دارسی، شبکه جریان، تنش موثر، مویینگی و جوشش",
+      "بتن ۲: رفتار ستون‌ها تحت فشار خالص، ستون تحت خمش تک‌محوره، نمودار اندرکنش و نقطه بالانس",
+      "زبان: درک مطلب سال‌های ۹۰ تا ۹۵ + واژگان"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول آذر: شمع‌ها در ماسه و جریان آب در خاک",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: انواع شمع، ظرفیت باربری نوک و جدار در ماسه", sub: "مکانیک خاک: قانون دارسی و بار هیدرولیکی", lang: "زبان: لغات تخصصی شمع" },
+          { day: "یکشنبه", main: "مکانیک خاک: نفوذپذیری معادل لایه‌ها (موازی و عمودی)", sub: "پی‌سازی: عمق بحرانی در شمع و تست‌های ماسه", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "پی‌سازی: ظرفیت باربری شمع در رس (روش آلفا، بتا و لاندا)", sub: "مکانیک خاک: آزمایش نفوذپذیری (بار ثابت و افتان)", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: شبکه جریان، خطوط جریان و دبی نشت", sub: "پی‌سازی: تست‌های ظرفیت باربری شمع در رس", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "بتن ۲: ستون تحت فشار خالص محوری (تنگ و اسپیرال)", sub: "مکانیک خاک: تست‌های دبی نشت در سد خاکی", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "خلاصه‌نویسی روابط شبکه جریان", lang: "زبان: کلوزتست", isThursday: true },
+          { day: "جمعه", main: "آزمون مبحثی هفته: ۳۰ تست از شمع و جریان آب", sub: "تحلیل کامل تست‌ها و ثبت نکات", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم آذر: گروه شمع، اصطکاک منفی، تنش مؤثر و نقطه جوشش",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: گروه شمع (ظرفیت باربری بلوکی و راندمان)", sub: "مکانیک خاک: گرادیان بحرانی، جوشش و ضریب اطمینان", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: تنش کل، فشار منفذی و تنش مؤثر ترزاقی", sub: "پی‌سازی: اصطکاک جداره منفی، دلایل و نیروی کشش", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "پی‌سازی: عمق نقطه خنثی در اصطکاک منفی و تست‌ها", sub: "مکانیک خاک: اثر تراوش رو به بالا و پایین بر تنش مؤثر", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: اثر مویینگی بر افزایش تنش مؤثر", sub: "بتن ۲: مقاومت اسمی و طراحی ستون تنگ و دورپیچ", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "بتن ۲: ستون تحت خمش تک‌محوره و فرضیات تنش-کرنش", sub: "پی‌سازی: تست‌های تکمیلی اصطکاک منفی و گروه شمع", lang: "زبان: روتین لغت" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "مرور فرمول‌های تنش مؤثر ترزاقی", lang: "زبان: تست کنکور ۹۳", isThursday: true },
+          { day: "جمعه", main: "آزمون هفتگی: ۳۵ تست از گروه شمع، تنش مؤثر و ستون", sub: "تحلیل کارنامه و یادداشت تله‌های طراح", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم آذر: مطالعات صحرایی (SPT و PLT) و دیاگرام اندرکنش ستون",
+        days: [
+          { day: "شنبه", main: "پی‌سازی: آزمایش SPT و ضرایب اصلاحی عدد N", sub: "بتن ۲: مفهوم مقطع معادل و دیاگرام اندرکنش P-M", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "بتن ۲: نقطه بالانس (Pnb, Mnb) در ستون‌های بتنی", sub: "پی‌سازی: آزمایش بارگذاری صفحه (PLT) در رس و ماسه", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "پی‌سازی: تست‌های روابط پک-ترزاقی در آزمایش PLT", sub: "مکانیک خاک: تست‌های زمان‌دار تراوش و تنش مؤثر", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "بتن ۲: شکست ناشی از فشار و کشش در دیاگرام P-M", sub: "پی‌سازی: تست‌های اصلاحات عدد نفوذ استاندارد", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "پی‌سازی: جمع‌بندی کامل فصل کاوش و بستن ۱۰۰٪ پی‌سازی", sub: "بتن ۲: تست‌های نقطه بالانس ستون‌های بتنی", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "فرمول‌نویسی نهایی کل کتاب پی‌سازی", lang: "زبان: درک مطلب", isThursday: true },
+          { day: "جمعه", main: "جشن ۱۰۰٪ پی‌سازی: آزمون جامع ۳۰ تایی از کل پی‌سازی", sub: "تحلیل آزمون برای تثبیت درصد بالای ۸۰", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم آذر: خمش دو محوره، لاغری ستون و جمع‌بندی آذر",
+        days: [
+          { day: "شنبه", main: "بتن ۲: خمش دو محوره ستون (کانتور بار و برسلر)", sub: "مکانیک خاک: تست‌های پوششی تراکم و تراوش", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "بتن ۲: پدیده لاغری ستون، کمانش و تشدید لنگر", sub: "تحلیل سازه ۱: مرور سریع قضایای لنگر سطح", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "مکانیک خاک: آزمون جامع ۲۵ تایی جریان و تنش مؤثر", sub: "بتن ۲: تست‌های خمش دومحوره و لاغری ستون", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "بتن ۲: آزمون اختصاصی ۲۰ تایی ستون‌های بتنی", sub: "مکانیک خاک: تحلیل سوالات آزمون روز قبل", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "مرور بتن ۱ و پی سطحی با حل تست‌های علامت‌دار", sub: "بتن ۲: تحلیل تست‌های آزمون ستون", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: پاکسازی کامل کل لیست قرمز آذر", sub: "مرور دفترچه دام‌های طراحان", lang: "زبان: تست کنکور ۹۴", isThursday: true },
+          { day: "جمعه", main: "آزمون آزمایشی پایان پاییز: ۵۰ تست جامع از تمام دروس", sub: "تحلیل کارنامه و برنامه‌ریزی نیمه دوم کنکور", lang: "استراحت" }
+        ]
+      }
+    ]
+  },
+  4: {
+    name: "دی ماه",
+    goals: [
+      "مکانیک خاک: توزیع تنش در خاک، تئوری تحکیم یک‌بعدی، نشست تحکیمی، سرعت تحکیم، مقاومت برشی و آزمایش‌های سه‌محوری",
+      "بتن ۲: دال‌های یک‌طرفه و دوطرفه (DDM)، برش پانچ و دیوارهای برشی",
+      "مرور پوششی: آزمون‌های دوره‌ای پی‌سازی و تحلیل سازه ۱",
+      "زبان: درک مطلب پیشرفته تخصصی عمران و کلوز تست"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول دی: توزیع تنش، تحکیم یک‌بعدی و آزمایش ادئومتر",
+        days: [
+          { day: "شنبه", main: "مکانیک خاک: روش ۲:۱ و روش‌های بوسینسک و وسترگارد", sub: "بتن ۲: دال یک‌طرفه و حداقل ضخامت کنترل خیز", lang: "زبان: لغات تخصصی تحکیم" },
+          { day: "یکشنبه", main: "مکانیک خاک: تئوری تحکیم ترزاقی، آزمایش ادئومتر و فشار پیش‌تحکیمی", sub: "بتن ۲: آرماتور حرارت و جمع‌شدگی در دال یک‌طرفه", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "مکانیک خاک: خاک‌های NC و OC و شاخص‌های Cc و Cs", sub: "پی‌سازی: مرور فرمول‌های ترزاقی و شمع", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: محاسبه نشست تحکیمی نهایی در رس", sub: "بتن ۲: تست‌های دال یک‌طرفه", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: حل ۱۰ تست زمان‌دار خطوط تأثیر", sub: "مکانیک خاک: تست‌های نشست تحکیمی نهایی", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "خلاصه‌نویسی فرمول‌های تحکیم نهایی", lang: "زبان: درک مطلب", isThursday: true },
+          { day: "جمعه", main: "آزمون مبحثی هفته: ۳۰ تست از تحکیم خاک و دال یک‌طرفه", sub: "تحلیل اشتباهات و ثبت دام‌های طراح", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم دی: سرعت تحکیم، اسکمپتون و دال‌های دوطرفه",
+        days: [
+          { day: "شنبه", main: "مکانیک خاک: سرعت تحکیم، ضریب cv، زمان Tv و درصد U", sub: "بتن ۲: دال‌های دوطرفه و شروط روش DDM", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: تعیین زمان تحکیم با زه‌کشی یک و دو طرفه", sub: "بتن ۲: لنگر کل استاتیکی M0 و توزیع در نوار ستونی", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "مکانیک خاک: ضرایب فشار منفذی اسکمپتون (A و B)", sub: "بتن ۲: تست‌های لنگرهای نوار ستونی در روش DDM", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "بتن ۲: برش پانچ در دال‌ها و پی‌ها در مقطع بحرانی d/2", sub: "مکانیک خاک: تست‌های سرعت تحکیم و ضریب cv", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "پی‌سازی: حل ۱۵ تست زمان‌دار پوششی از فشار جانبی", sub: "بتن ۲: تست‌های برش پانچ و تقویت با خاموت", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "فرمول‌نویسی درصد تحکیم و زمان", lang: "زبان: تست کنکور ۹۵", isThursday: true },
+          { day: "جمعه", main: "آزمون هفتگی: ۳۵ تست تحکیم پیشرفته و دال‌های بتنی", sub: "تحلیل کامل کارنامه و رفع اشکال", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم دی: مقاومت برشی خاک و دیوارهای برشی بتنی",
+        days: [
+          { day: "شنبه", main: "مکانیک خاک: دایره مور و معیار شکست موهر-کولمب", sub: "بتن ۲: دیوارهای برشی مستطیلی و رفتار خمشی", lang: "زبان: لغات تخصصی برش" },
+          { day: "یکشنبه", main: "مکانیک خاک: تنش‌های اصلی در گسیختگی و زاویه صفحه شکست", sub: "بتن ۲: طراحی برشی دیوار برشی و المان‌های مرزی", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "مکانیک خاک: آزمایش سه‌محوری UU در رس", sub: "بتن ۲: تست‌های سراسری دیوار برشی بتنی", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: آزمایش‌های سه‌محوری CU و CD و مقایسه آنها", sub: "تحلیل سازه ۱: حل ۱۰ تست سرعتی از تیر مزدوج", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "بتن ۲: انتقال لنگر نامتعادل با برش و خمش در دال", sub: "مکانیک خاک: تست‌های آزمایش‌های سه‌محوری رس", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "مرور نکات تنش کل و موثر در برش", lang: "زبان: درک مطلب", isThursday: true },
+          { day: "جمعه", main: "آزمون مبحثی هفته: ۳۵ تست مقاومت برشی و دیوار برشی", sub: "تحلیل کامل تست‌ها و ثبت نکات", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم دی: رفتار ماسه و رس در برش و جمع‌بندی دی",
+        days: [
+          { day: "شنبه", main: "مکانیک خاک: رفتار ماسه شل و متراکم در برش و اتساع", sub: "بتن ۲: مرور تست‌های دال و پانچ و دیوار برشی", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: مسیر تنش در صفحات p-q و s-t", sub: "پی‌سازی: آزمون جامع پوششی ۲۰ تایی از شمع و صحرایی", lang: "زبان: لغات عمومی" },
+          { day: "دوشنبه", main: "مکانیک خاک: آزمون جامع ۲۵ تایی تحکیم و مقاومت برشی", sub: "بتن ۲: تحلیل تست‌های آزمون‌های گذشته", lang: "زبان: ریدینگ تخصصی" },
+          { day: "سه‌شنبه", main: "بتن ۲: آزمون جامع ۲۵ تایی دال، پانچ و دیوار برشی", sub: "مکانیک خاک: تحلیل کامل آزمون روز قبل", lang: "زبان: لغات ۵۰۴" },
+          { day: "چهارشنبه", main: "تورق سریع خلاصه‌نویس‌های مقاومت برشی و دال بتنی", sub: "تحلیل سازه ۱: تست پوششی معینی و نامعینی", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: پاکسازی کامل کل لیست قرمز دی", sub: "ثبت کامل دام‌های طراح در دفترچه نکات", lang: "زبان: تست کنکور ۹۶", isThursday: true },
+          { day: "جمعه", main: "آزمون آزمایشی شبیه‌ساز ماه دی: ۵۰ تست از تمام دروس", sub: "تحلیل دقیق درصدهای خاک و بتن و استراحت", lang: "استراحت" }
+        ]
+      }
+    ]
+  },
+  5: {
+    name: "بهمن ماه",
+    goals: [
+      "مکانیک خاک: پایداری شیروانی‌های نامحدود و محدود (سوئدی و بیشاپ) و بستن ۱۰۰٪ مکانیک خاک",
+      "بتن ۲: کنترل تغییرشکل‌ها، ممان اینرسی برانسون، کنترل ترک و شکل‌پذیری (بستن ۱۰۰٪ بتن)",
+      "تحلیل سازه ۱: مرور جامع و آزمون‌های زمان‌دار سرعت‌سنجی",
+      "زبان: حل تست‌های زبان کنکورهای سراسری ۹۵ تا ۱۴۰۰"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول بهمن: شیروانی‌های نامحدود و ممان اینرسی برانسون",
+        days: [
+          { day: "شنبه", main: "مکانیک خاک: پایداری شیروانی نامحدود در خاک دانه‌ای", sub: "بتن ۲: لنگر ترک‌خوردگی Mcr و اینرسی برانسون Ie", lang: "زبان: لغات تخصصی شیروانی" },
+          { day: "یکشنبه", main: "بتن ۲: محاسبه خیز آنی و خیز درازمدت با خزش بتن", sub: "مکانیک خاک: پایداری شیروانی نامحدود در رس", lang: "زبان: تست زبان کنکور ۹۵" },
+          { day: "دوشنبه", main: "مکانیک خاک: تست‌های کنکور شیروانی‌های نامحدود", sub: "بتن ۲: تست‌های سراسری خیز تیرها و دال‌ها با رابطه برانسون", lang: "زبان: روتین واژگان" },
+          { day: "سه‌شنبه", main: "بتن ۲: کنترل عرض ترک‌ها و ضوابط توزیع میلگرد", sub: "پی‌سازی: مرور فرمول‌های دیوار حائل و پی سطحی", lang: "زبان: درک مطلب کنکور" },
+          { day: "چهارشنبه", main: "تحلیل سازه ۱: آزمون زمان‌دار ۲۰ تایی کار مجازی", sub: "مکانیک خاک: خلاصه‌نویسی روابط ضریب اطمینان شیروانی", lang: "زبان: لغات عمومی" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "ثبت اشتباهات در دفترچه نکات", lang: "زبان: گرامر کنکور", isThursday: true },
+          { day: "جمعه", main: "آزمون مبحثی هفته: ۳۰ تست شیروانی نامحدود و تغییرشکل بتن", sub: "تحلیل کارنامه و رفع اشکال", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم بهمن: روش سوئدی، بیشاپ و شکل‌پذیری سازه‌های بتنی",
+        days: [
+          { day: "شنبه", main: "مکانیک خاک: پایداری شیروانی محدود لغزش صفحه‌ای و گوه‌ای", sub: "بتن ۲: ضوابط شکل‌پذیری سازه‌های بتنی در زلزله", lang: "زبان: لغت تخصصی" },
+          { day: "یکشنبه", main: "مکانیک خاک: پایداری شیروانی لغزش دایره‌ای (روش سوئدی)", sub: "بتن ۲: خاموت‌گذاری ویژه تیر و ستون لرزه‌ای", lang: "زبان: تست زبان کنکور ۹۶" },
+          { day: "دوشنبه", main: "مکانیک خاک: روش قطعات بیشاپ (روابط و فرضیات)", sub: "بتن ۲: ضوابط اتصالات تیر به ستون در سازه بتنی", lang: "زبان: روتین واژگان" },
+          { day: "سه‌شنبه", main: "مکانیک خاک: تست‌های سراسری بیشاپ و روش سوئدی", sub: "بتن ۲: تست‌های ضوابط شکل‌پذیری و قطع میلگردها", lang: "زبان: درک مطلب کنکور" },
+          { day: "چهارشنبه", main: "جشن ۱۰۰٪ بتن‌آرمه: بستن کامل مباحث بتن ۱ و ۲", sub: "تحلیل سازه ۱: آزمون سرعتی ۲۰ تایی خطوط تأثیر", lang: "زبان: لغات ۵۰۴" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: اتمام کامل شیروانی و بستن ۱۰۰٪ خاک", sub: "فرمول‌نویسی نهایی کل کتاب مکانیک خاک", lang: "زبان: کلوزتست کنکور", isThursday: true },
+          { day: "جمعه", main: "آزمون جشن اتمام مباحث: ۴۰ تست از کل خاک و کل بتن ۲", sub: "تحلیل تست‌ها و ثبت موفقیت بستن مباحث", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم بهمن: آزمون‌های جامع درون‌درسی",
+        days: [
+          { day: "شنبه", main: "آزمون جامع زمان‌دار ۳۰ تایی اختصاصی بتن ۱ و ۲", sub: "تحلیل سوالات بتن و یادداشت اشتباهات", lang: "زبان: تست کنکور ۹۷" },
+          { day: "یکشنبه", main: "آزمون جامع زمان‌دار ۳۰ تایی اختصاصی خاک و پی‌سازی", sub: "تحلیل سوالات خاک و پی و یادداشت دام‌ها", lang: "زبان: روتین واژگان" },
+          { day: "دوشنبه", main: "آزمون جامع زمان‌دار ۳۰ تایی تحلیل سازه ۱ (جلد اول)", sub: "تحلیل سوالات تحلیل و ثبت اشتباهات", lang: "زبان: لغات عمومی" },
+          { day: "سه‌شنبه", main: "مرور متمرکز نقاط ضعف شناسایی‌شده در آزمون بتن", sub: "حل ۱۰ تست سخت و نشان‌دار بتن", lang: "زبان: درک مطلب کنکور" },
+          { day: "چهارشنبه", main: "مرور نقاط ضعف شناسایی‌شده در آزمون خاک و پی", sub: "حل ۱۰ تست سخت و نشان‌دار خاک و پی", lang: "زبان: تست کنکور ۹۸" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "تورق فرمول‌های تحلیل سازه", lang: "زبان: مرور واژگان", isThursday: true },
+          { day: "جمعه", main: "آزمون نیمه‌جامع اول: ۶۰ تست زمان‌دار از ۴ درس هدف", sub: "تحلیل کامل کارنامه و بررسی تراز و درصدها", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم بهمن: تثبیت کامل درصدها و آمادگی اسفند",
+        days: [
+          { day: "شنبه", main: "مرور فرمول‌های وزن مخصوص، تحکیم و برش خاک", sub: "حل ۱۵ تست زمان‌دار آزمون‌های سال‌های دور", lang: "زبان: تست کنکور ۹۹" },
+          { day: "یکشنبه", main: "مرور فرمول‌های ظرفیت باربری، فشار جانبی و شمع پی", sub: "حل ۱۵ تست زمان‌دار از تست‌های زوج سری عمران", lang: "زبان: روتین واژگان" },
+          { day: "دوشنبه", main: "مرور فرمول‌های خمش، برش، پیچش و ستون بتن", sub: "حل ۱۵ تست زمان‌دار تالیفی استاندارد", lang: "زبان: تست کنکور ۱۴۰۰" },
+          { day: "سه‌شنبه", main: "مرور تیر مزدوج، لنگرسطح، کار مجازی و خطوط تأثیر", sub: "حل ۱۵ تست سرعتی خطوط تأثیر خرپا", lang: "زبان: ریدینگ کنکور" },
+          { day: "چهارشنبه", main: "مرتب‌سازی خلاصه‌برگ‌ها برای جمع‌بندی اسفند", sub: "مرور دفترچه دام‌های آموزشی", lang: "زبان: لغات کلیدی" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: پاکسازی کامل کل لیست قرمز بهمن", sub: "تنظیم استراتژی دوران جمع‌بندی اسفند", lang: "زبان: مرور لغات", isThursday: true },
+          { day: "جمعه", main: "آزمون شبیه‌ساز پایان بهمن: ۶۰ تست در زمان استاندارد ارشد", sub: "تحلیل کارنامه و برنامه‌ریزی دقیق اسفند", lang: "استراحت" }
+        ]
+      }
+    ]
+  },
+  6: {
+    name: "اسفند ماه",
+    goals: [
+      "شبیه‌سازی کامل کنکورهای سراسری سال‌های ۱۳۹۵ تا ۱۴۰۰ در شرایط زمان‌دار رسمی",
+      "تحلیل عمیق تک‌تک سوالات آزمون‌ها و طبقه‌بندی اشتباهات",
+      "تورق سریع فرمول‌نامه‌های دست‌نویس و یادداشت‌های شخصی",
+      "زبان: مرور واژگان پرتکرار و حل متن‌های تخصصی سال‌های اخیر"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول اسفند: شبیه‌سازی کنکورهای سراسری ۱۳۹۵ و ۱۳۹۶",
+        days: [
+          { day: "شنبه", main: "شبیه‌سازی کنکور ارشد ۱۳۹۵: دفترچه تخصصی", sub: "تحلیل اولیه سوالات نزده و غلط", lang: "زبان: حل زبان کنکور ۹۵" },
+          { day: "یکشنبه", main: "تحلیل عمیق و خط‌به‌خط سوالات خاک و پی کنکور ۱۳۹۵", sub: "یادداشت دام‌های طراح در دفترچه نکات", lang: "زبان: تحلیل زبان کنکور ۹۵" },
+          { day: "دوشنبه", main: "تحلیل عمیق سوالات بتن و تحلیل سازه کنکور ۱۳۹۵", sub: "مرور مباحث مرتبط با غلط‌ها در کتاب", lang: "زبان: مرور واژگان تخصصی" },
+          { day: "سه‌شنبه", main: "شبیه‌سازی کنکور ارشد ۱۳۹۶: دفترچه تخصصی زمان‌دار", sub: "تحلیل اولیه درصدها و رتبه تقریبی", lang: "زبان: حل زبان کنکور ۹۶" },
+          { day: "چهارشنبه", main: "تحلیل عمیق سوالات خاک، پی، بتن و تحلیل کنکور ۱۳۹۶", sub: "ثبت اشتباهات محاسباتی در دفترچه دام‌ها", lang: "زبان: تحلیل زبان کنکور ۹۶" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "حل مجدد تست‌های غلط دو کنکور ۹۵ و ۹۶", lang: "زبان: روتین واژگان", isThursday: true },
+          { day: "جمعه", main: "روز استراحت و ریکاوری روانی + مرور دفترچه دام‌ها", sub: "ارزیابی روند ثبات درصدها", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم اسفند: شبیه‌سازی کنکورهای سراسری ۱۳۹۷ و ۱۳۹۸",
+        days: [
+          { day: "شنبه", main: "شبیه‌سازی کنکور ارشد ۱۳۹۷: دفترچه تخصصی زمان‌دار", sub: "محاسبه درصدها و تراز تقریبی", lang: "زبان: حل زبان کنکور ۹۷" },
+          { day: "یکشنبه", main: "تحلیل دقیق سوالات خاک و پی کنکور ۱۳۹۷", sub: "رفع اشکال تست‌های تحکیم و باربری", lang: "زبان: تحلیل زبان کنکور ۹۷" },
+          { day: "دوشنبه", main: "تحلیل دقیق سوالات بتن و تحلیل سازه کنکور ۱۳۹۷", sub: "رفع اشکال تست‌های ستون و کار مجازی", lang: "زبان: مرور لغات عمومی" },
+          { day: "سه‌شنبه", main: "شبیه‌سازی کنکور ارشد ۱۳۹۸: دفترچه تخصصی زمان‌دار", sub: "محاسبه درصدها و تحلیل نقاط ضعف", lang: "زبان: حل زبان کنکور ۹۸" },
+          { day: "چهارشنبه", main: "تحلیل عمیق تمام سوالات کنکور ۱۳۹۸", sub: "ثبت تله‌های جدید در دفترچه نکات", lang: "زبان: تحلیل زبان کنکور ۹۸" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "حل مجدد تست‌های غلط دو کنکور ۹۷ و ۹۸", lang: "زبان: روتین واژگان", isThursday: true },
+          { day: "جمعه", main: "روز استراحت و ریکاوری + تورق سبک خلاصه‌های تحلیل ۱", sub: "بررسی مدیریت زمان در آزمون", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم اسفند: شبیه‌سازی کنکورهای سراسری ۱۳۹۹ و ۱۴۰۰",
+        days: [
+          { day: "شنبه", main: "شبیه‌سازی کنکور ارشد ۱۳۹۹: دفترچه تخصصی زمان‌دار", sub: "محاسبه درصدها و ثبت کارنامه", lang: "زبان: حل زبان کنکور ۹۹" },
+          { day: "یکشنبه", main: "تحلیل خط‌به‌خط سوالات خاک، پی، بتن و تحلیل کنکور ۹۹", sub: "یادداشت نکات سوالات چالشی", lang: "زبان: تحلیل زبان کنکور ۹۹" },
+          { day: "دوشنبه", main: "شبیه‌سازی کنکور ارشد ۱۴۰۰: دفترچه تخصصی زمان‌دار", sub: "محاسبه درصدها و ارزیابی نهایی", lang: "زبان: حل زبان کنکور ۱۴۰۰" },
+          { day: "سه‌شنبه", main: "تحلیل خط‌به‌خط سوالات کنکور ۱۴۰۰", sub: "ثبت تله‌ها و نکات در دفترچه دام‌ها", lang: "زبان: تحلیل زبان کنکور ۱۴۰۰" },
+          { day: "چهارشنبه", main: "حل مجدد تست‌های غلط و علامت‌دار کنکورهای ۹۹ و ۱۴۰۰", sub: "مرور فرمول‌های فرار آزمون‌های اخیر", lang: "زبان: مرور لغات پرتکرار" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: مطالعه مباحث لیست قرمز عقب‌افتاده", sub: "مرور کامل دفترچه دام‌های آموزشی", lang: "زبان: درک مطلب تخصصی", isThursday: true },
+          { day: "جمعه", main: "آزمون شبیه‌ساز ترکیبی سخت‌ترین تست‌های ۹۵ تا ۱۴۰۰", sub: "تحلیل کارنامه و جشن پایان اسفند", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم اسفند: جمع‌بندی فاز اول و آمادگی برای نوروز",
+        days: [
+          { day: "شنبه", main: "مرور فوق‌سریع خاک (روابط وزنی، تحکیم و برش)", sub: "حل ۱۰ تست منتخب سرعتی", lang: "زبان: مرور فلش‌کارت‌ها" },
+          { day: "یکشنبه", main: "مرور فوق‌سریع پی‌سازی (ترزاقی، رانکین و شمع)", sub: "حل ۱۰ تست منتخب سرعتی", lang: "زبان: مرور واژگان تخصصی" },
+          { day: "دوشنبه", main: "مرور فوق‌سریع بتن (خمش، برش، پیچش و ستون)", sub: "حل ۱۰ تست منتخب سرعتی", lang: "زبان: مرور واژگان عمومی" },
+          { day: "سه‌شنبه", main: "مرور فوق‌سریع تحلیل ۱ (کار مجازی و خطوط تأثیر)", sub: "حل ۱۰ تست منتخب سرعتی", lang: "زبان: ریدینگ کوتاه" },
+          { day: "چهارشنبه", main: "دسته‌بندی نهایی تست‌های ستاره‌دار برای فروردین", sub: "مرور کامل دفترچه دام‌های طراح", lang: "زبان: مرور لغات ۵۰۴" },
+          { day: "پنج‌شنبه", main: "ایستگاه جبرانی هوشمند: پاکسازی کامل کل لیست قرمز اسفند", sub: "استراحت سبک قبل از سال نو", lang: "زبان: استراحت", isThursday: true },
+          { day: "جمعه", main: "روز استراحت و جشن سال نو و تجدید قوای روانی کامل", sub: "آمادگی ذهنی برای ماه‌های پایانی کنکور", lang: "تبریک سال نو!" }
+        ]
+      }
+    ]
+  },
+  7: {
+    name: "فروردین و اردیبهشت (تا کنکور)",
+    goals: [
+      "شبیه‌سازی کنکورهای سال‌های ۱۴۰۱ تا ۱۴۰۵ دقیقاً در شرایط رسمی (ساعت ۸ صبح با لباس و پاسخبرگ)",
+      "تحلیل عصرگاهی آزمون‌ها و تثبیت درصدهای طلایی",
+      "تورق سریع خلاصه‌ها در هفته منتهی به کنکور و تنظیم ساعت بیولوژیکی خواب",
+      "حفظ آرامش، آمادگی روانی و کسب رتبه زیر ۲۰۰ دانشگاه‌های تهران"
+    ],
+    weeks: [
+      {
+        weekNum: 1,
+        title: "هفته اول فروردین: شبیه‌سازی کنکور سراسری ۱۴۰۱",
+        days: [
+          { day: "شنبه", main: "۸ صبح: شبیه‌سازی کامل کنکور ۱۴۰۱ (شرایط واقعی)", sub: "عصر شنبه: تصحیح و تحلیل سوالات خاک و پی", lang: "زبان: تحلیل زبان کنکور ۱۴۰۱" },
+          { day: "یکشنبه", main: "عصر یکشنبه: تحلیل سوالات بتن و تحلیل سازه کنکور ۱۴۰۱", sub: "ثبت کامل نکات و دام‌های جدید آزمون", lang: "زبان: مرور واژگان کنکور ۱۴۰۱" },
+          { day: "دوشنبه", main: "مرور متمرکز مباحث غلط یا نزده کنکور ۱۴۰۱", sub: "حل ۵ تست مشابه از کتاب سری عمران", lang: "زبان: مرور لغات تخصصی" },
+          { day: "سه‌شنبه", main: "تورق خلاصه‌برگ‌های مکانیک خاک و پی‌سازی", sub: "حل مجدد تست‌های غلط آزمون روز شنبه", lang: "زبان: مرور لغات عمومی" },
+          { day: "چهارشنبه", main: "تورق خلاصه‌برگ‌های بتن‌آرمه و تحلیل سازه ۱", sub: "حل ۱۰ تست سرعتی خطوط تأثیر و تیر مزدوج", lang: "زبان: ریدینگ کوتاه" },
+          { day: "پنج‌شنبه", main: "ایستگاه مرور: مطالعه کامل دفترچه دام‌های آموزشی", sub: "استراحت و پیاده‌روی سبک عصرگاهی", lang: "زبان: فلش‌کارت", isThursday: true },
+          { day: "جمعه", main: "روز استراحت کامل و ریکاوری برای آزمون بعدی", sub: "خواب کافی و تغذیه سالم", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 2,
+        title: "هفته دوم فروردین: شبیه‌سازی کنکور سراسری ۱۴۰۲",
+        days: [
+          { day: "شنبه", main: "۸ صبح: شبیه‌سازی کامل کنکور ۱۴۰۲ (شرایط رسمی)", sub: "عصر شنبه: تصحیح و تحلیل سوالات خاک و پی", lang: "زبان: تحلیل زبان کنکور ۱۴۰۲" },
+          { day: "یکشنبه", main: "عصر یکشنبه: تحلیل سوالات بتن و تحلیل سازه کنکور ۱۴۰۲", sub: "یادداشت دام‌های طراح در دفترچه نکات", lang: "زبان: مرور واژگان کنکور ۱۴۰۲" },
+          { day: "دوشنبه", main: "مرور مباحث نیازمند تقویت شناسایی‌شده در کنکور ۱۴۰۲", sub: "حل تست‌های تکمیلی تحکیم و پانچ", lang: "زبان: لغات تخصصی عمران" },
+          { day: "سه‌شنبه", main: "تورق سریع فرمول‌های طلایی خاک و پی", sub: "حل مجدد تست‌های غلط آزمون شنبه", lang: "زبان: لغات عمومی" },
+          { day: "چهارشنبه", main: "تورق سریع فرمول‌های طلایی بتن و تحلیل ۱", sub: "حل ۱۰ تست سرعتی کار مجازی و ستون", lang: "زبان: روتین واژگان" },
+          { day: "پنج‌شنبه", main: "ایستگاه مرور: بازخوانی کامل دفترچه نکات شخصی", sub: "آماده‌سازی روانی برای آزمون سوم", lang: "زبان: مرور لغات", isThursday: true },
+          { day: "جمعه", main: "روز استراحت و ریکاوری ذهنی و جسمی", sub: "تنظیم ساعت خواب (بیدار شدن ساعت ۶:۳۰)", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 3,
+        title: "هفته سوم فروردین: شبیه‌سازی کنکور سراسری ۱۴۰۳",
+        days: [
+          { day: "شنبه", main: "۸ صبح: شبیه‌سازی کامل کنکور ۱۴۰۳ (شرایط رسمی)", sub: "عصر شنبه: تحلیل سوالات خاک و پی", lang: "زبان: تحلیل زبان کنکور ۱۴۰۳" },
+          { day: "یکشنبه", main: "عصر یکشنبه: تحلیل سوالات بتن و تحلیل سازه کنکور ۱۴۰۳", sub: "ثبت تله‌های پرتکرار طراحان", lang: "زبان: مرور لغات کنکور ۱۴۰۳" },
+          { day: "دوشنبه", main: "رفع اشکال دقیق تست‌های غلط کنکور ۱۴۰۳", sub: "مرور فرمول‌های مرتبط با مباحث خطا", lang: "زبان: لغات تخصصی" },
+          { day: "سه‌شنبه", main: "تورق خلاصه‌نامه‌های جامع تمامی دروس هدف", sub: "حل مجدد تست‌های علامت‌دار کنکورهای اخیر", lang: "زبان: لغات عمومی" },
+          { day: "چهارشنبه", main: "حل بسته ۳۰ تایی تست‌های تالیفی استاندارد و سرعتی", sub: "تمرین تکنیک ضربدر و منها در زمان‌بندی", lang: "زبان: ریدینگ کوتاه" },
+          { day: "پنج‌شنبه", main: "ایستگاه مرور: مرور اشتباهات در دفترچه دام‌ها", sub: "استراحت سبک عصرگاهی", lang: "زبان: فلش‌کارت", isThursday: true },
+          { day: "جمعه", main: "روز استراحت و بازسازی انرژی برای آزمون‌های نهایی", sub: "بررسی مثبت وضعیت و افزایش اعتمادبه‌نفس", lang: "استراحت" }
+        ]
+      },
+      {
+        weekNum: 4,
+        title: "هفته چهارم فروردین تا روز کنکور: شبیه‌سازی ۱۴۰۴ و ۱۴۰۵ و تورق طلایی",
+        days: [
+          { day: "شنبه", main: "۸ صبح: شبیه‌سازی کامل کنکور ارشد ۱۴۰۴", sub: "عصر شنبه: تحلیل جامع و ارزیابی تراز", lang: "زبان: تحلیل بخش زبان آزمون" },
+          { day: "یکشنبه", main: "۸ صبح: شبیه‌سازی کامل کنکور ارشد ۱۴۰۵ (یا آزمون نهایی)", sub: "عصر یکشنبه: تحلیل آزمون و ثبت نکات پایانی", lang: "زبان: تحلیل بخش زبان آزمون" },
+          { day: "دوشنبه", main: "تورق سریع خلاصه‌برگ‌های خاک و پی", sub: "مرور فرمول‌های تراز آب، رانکین و شمع", lang: "زبان: مرور واژگان پرتکرار" },
+          { day: "سه‌شنبه", main: "تورق سریع خلاصه‌برگ‌های بتن و تحلیل ۱", sub: "مرور نکات پانچ، ستون‌ها و کار مجازی", lang: "زبان: تورق لغات مهم" },
+          { day: "چهارشنبه", main: "بازخوانی سریع دفترچه دام‌ها و اشتباهات شخصی", sub: "جمع‌آوری مداد، پاک‌کن، ساعت و کارت ورود", lang: "زبان: آرامش و تنفس عمیق" },
+          { day: "پنج‌شنبه", main: "روز استراحت کامل قبل از آزمون: بدون هیچ مطالعه درسی", sub: "قدم زدن، تغذیه سبک و خواب از ساعت ۱۰:۳۰ شب", lang: "آرامش کامل", isThursday: true },
+          { day: "جمعه", main: "روز موعود کنکور ارشد عمران: اجرای مقتدرانه استراتژی در جلسه!", sub: "به سوی رتبه ۲ رقمی و قبولی در امیرکبیر و علم‌وصنعت", lang: "موفقیت قطعی!" }
+        ]
+      }
+    ]
+  }
+};
+
+let currentMonth = 1;
+let reports = JSON.parse(localStorage.getItem('study_reports') || '[]');
+let backlogs = JSON.parse(localStorage.getItem('study_backlogs') || '[]');
+
+function renderMonth(mNum) {
+  const mData = curriculum[mNum];
+  if (!mData) return;
+
+  const goalsDiv = document.getElementById('monthGoals');
+  goalsDiv.innerHTML = `<h4>فصل‌ها و اهداف کلیدی که در ${mData.name} باید ۱۰۰٪ بسته شوند:</h4>
+    <ul>${mData.goals.map(g => `<li>${g}</li>`).join('')}</ul>`;
+
+  const container = document.getElementById('weeksTablesContainer');
+  container.innerHTML = '';
+
+  mData.weeks.forEach(w => {
+    const weekSec = document.createElement('div');
+    weekSec.className = 'week-section';
+
+    let tableHtml = `
+      <div class="week-title">${w.title}</div>
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th style="width: 12%;">روز هفته</th>
+            <th style="width: 44%;">بلوک اصلی (۹۰ دقیقه)</th>
+            <th style="width: 26%;">بلوک مکمل (۴۵ دقیقه)</th>
+            <th style="width: 18%;">روتین ثابت (۲۰ دقیقه)</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    w.days.forEach(d => {
+      const isThu = d.isThursday;
+      tableHtml += `
+        <tr onclick='showDayFocus(${JSON.stringify(d).replace(/'/g, "&apos;")})' style="${isThu ? 'background:#fff7ed;' : ''}">
+          <td><strong>${d.day}</strong> ${isThu ? '<span class="badge badge-thursday">ایستگاه جبرانی</span>' : ''}</td>
+          <td><span class="badge b-main">اصلی</span> ${d.main}</td>
+          <td><span class="badge b-sub">مکمل</span> ${d.sub}</td>
+          <td><span class="badge b-lang">زبان</span> ${d.lang}</td>
+        </tr>
+      `;
+    });
+
+    tableHtml += `</tbody></table>`;
+    weekSec.innerHTML = tableHtml;
+    container.appendChild(weekSec);
+  });
+}
+
+function switchMonth(mNum) {
+  currentMonth = mNum;
+  document.querySelectorAll('.btn-month').forEach((b, i) => {
+    b.classList.toggle('active', (i + 1) === mNum);
+  });
+  renderMonth(mNum);
+}
+
+function showDayFocus(dObj) {
+  const card = document.getElementById('dayFocusCard');
+  document.getElementById('focusDayTitle').innerText = `برنامه و مأموریت روز: ${dObj.day}`;
+  
+  if (dObj.isThursday && backlogs.length > 0) {
+    const pendingList = backlogs.map((b, i) => `${i+1}. ${b.topic} (${b.date})`).join(' | ');
+    document.getElementById('focusBlockMain').innerHTML = `<strong style="color:#b91c1c;">مباحث نیازمند جبران امروز:</strong><br>${pendingList}`;
+  } else {
+    document.getElementById('focusBlockMain').innerText = dObj.main;
+  }
+  
+  document.getElementById('focusBlockSub').innerText = dObj.sub;
+  document.getElementById('focusBlockLang').innerText = dObj.lang;
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function clearFocusCard() {
+  document.getElementById('dayFocusCard').style.display = 'none';
+}
+
+function saveReport(e) {
+  e.preventDefault();
+  const date = document.getElementById('repDate').value.trim();
+  const hours = parseFloat(document.getElementById('repHours').value);
+  const statusMain = document.getElementById('statusMain').value;
+  const topicMain = document.getElementById('topicMain').value.trim() || 'بلوک اصلی ۹۰ دقیقه';
+  const statusSub = document.getElementById('statusSub').value;
+  const topicSub = document.getElementById('topicSub').value.trim() || 'بلوک مکمل ۴۵ دقیقه';
+  const statusLang = document.getElementById('statusLang').value;
+  const notes = document.getElementById('repNotes').value.trim();
+
+  if (!date || isNaN(hours)) return;
+
+  if (hours === 0) {
+    backlogs.push({ id: Date.now() + 1, date, topic: `کل مباحث روز (${topicMain} + ${topicSub})`, block: 'کل روز' });
+  } else {
+    if (statusMain === 'missed') {
+      backlogs.push({ id: Date.now() + 2, date, topic: topicMain, block: 'بلوک اصلی (۹۰ دقیقه)' });
+    }
+    if (statusSub === 'missed') {
+      backlogs.push({ id: Date.now() + 3, date, topic: topicSub, block: 'بلوک مکمل (۴۵ دقیقه)' });
+    }
+    if (statusLang === 'missed') {
+      backlogs.push({ id: Date.now() + 4, date, topic: 'روتین لغت و متون زبان تخصصی', block: 'زبان (۲۰ دقیقه)' });
+    }
+  }
+
+  reports.push({ date, hours, notes, missedCount: (hours === 0 ? 2 : (statusMain === 'missed' ? 1 : 0) + (statusSub === 'missed' ? 1 : 0)) });
+  localStorage.setItem('study_reports', JSON.stringify(reports));
+  localStorage.setItem('study_backlogs', JSON.stringify(backlogs));
+
+  document.getElementById('studyForm').reset();
+  renderBacklogs();
+  updateAnalytics();
+  alert('گزارش با موفقیت ثبت شد!');
+}
+
+function renderBacklogs() {
+  const container = document.getElementById('backlogList');
+  const countSpan = document.getElementById('backlogCount');
+  countSpan.innerText = `${backlogs.length} مبحث`;
+
+  if (backlogs.length === 0) {
+    container.innerHTML = `<div class="no-backlog">هیچ مبحث عقب‌مانده‌ای ندارید! همه کارها طبق برنامه جلو رفته است. 🎉</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  backlogs.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'backlog-item';
+    div.innerHTML = `
+      <div class="backlog-info">
+        <span class="backlog-topic">🔴 ${item.topic}</span>
+        <span class="backlog-meta">تاریخ ثبت: ${item.date} | بخش: ${item.block}</span>
+      </div>
+      <button class="btn-resolved" onclick="resolveBacklog(${item.id})">✅ خواندم و جبران شد</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function resolveBacklog(id) {
+  backlogs = backlogs.filter(b => b.id !== id);
+  localStorage.setItem('study_backlogs', JSON.stringify(backlogs));
+  renderBacklogs();
+}
+
+function clearAllData() {
+  if (confirm("آیا مایل به حذف تاریخچه گزارش‌ها و مباحث عقب‌مانده هستید؟")) {
+    reports = [];
+    backlogs = [];
+    localStorage.removeItem('study_reports');
+    localStorage.removeItem('study_backlogs');
+    renderBacklogs();
+    updateAnalytics();
+  }
+}
+
+function updateAnalytics() {
+  const total = reports.reduce((acc, r) => acc + r.hours, 0);
+  const count = reports.length;
+  const avg = count > 0 ? (total / count).toFixed(1) : 0;
+
+  document.getElementById('statTotalHours').innerText = total.toFixed(1);
+  document.getElementById('statDaysCount').innerText = count;
+  document.getElementById('statAvgHours').innerText = avg;
+
+  drawChart();
+}
+
+function drawChart() {
+  const canvas = document.getElementById('progressChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  
+  canvas.width = canvas.parentElement.clientWidth * dpr;
+  canvas.height = 180 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const w = canvas.width / dpr;
+  const h = 180;
+  ctx.clearRect(0, 0, w, h);
+
+  if (reports.length === 0) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px Tahoma';
+    ctx.textAlign = 'center';
+    ctx.fillText('هنوز گزارشی ثبت نشده است. اولین مطالعه را ثبت کنید!', w / 2, h / 2);
+    return;
+  }
+
+  const slice = reports.slice(-10);
+  const maxHours = Math.max(4, ...slice.map(r => r.hours));
+  const paddingX = 40;
+  const paddingY = 30;
+  const plotW = w - paddingX * 2;
+  const plotH = h - paddingY * 2;
+
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(paddingX, h - paddingY);
+  ctx.lineTo(w - paddingX, h - paddingY);
+  ctx.stroke();
+
+  const barWidth = Math.min(35, (plotW / slice.length) * 0.55);
+  const stepX = plotW / slice.length;
+
+  slice.forEach((r, i) => {
+    const x = paddingX + i * stepX + (stepX - barWidth) / 2;
+    const barH = (r.hours / maxHours) * plotH;
+    const y = h - paddingY - barH;
+
+    ctx.fillStyle = r.hours === 0 ? '#ef4444' : (r.hours >= 2.5 ? '#10b981' : '#3b82f6');
+    ctx.beginPath();
+    ctx.roundRect(x, y, barWidth, barH, [4, 4, 0, 0]);
+    ctx.fill();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 10px Tahoma';
+    ctx.textAlign = 'center';
+    ctx.fillText(r.hours + 'h', x + barWidth / 2, y - 5);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px Tahoma';
+    ctx.fillText(r.date, x + barWidth / 2, h - paddingY + 16);
+  });
+}
+
+// مقداردهی اولیه
+window.addEventListener('resize', drawChart);
+updateCountdown();
+renderMonth(1);
+renderBacklogs();
+updateAnalytics();
+</script>
+</body>
+</html>
